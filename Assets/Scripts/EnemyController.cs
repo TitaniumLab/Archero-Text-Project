@@ -1,58 +1,62 @@
-using System.Collections;
-using Unity.Burst.CompilerServices;
 using UnityEngine;
 
 public class EnemyController : Controller
 {
-    Vector2 destinationPoint;
 
-    private void Start()
-    {
-        InvokeRepeating("StartAI", 0, 5);
-    }
 
     private void FixedUpdate()
     {
-        float remainingDistance = (destinationPoint - new Vector2(transform.position.x, transform.position.y)).magnitude;
+        horizontalInput = destinationPoint.x - transform.position.x;
+        verticalInput = destinationPoint.y - transform.position.y;
 
-        if (remainingDistance > 0.2f)
-            movement?.Move(destinationPoint - new Vector2(transform.position.x, transform.position.y));
-        else
-            movement?.Move(Vector2.zero);
-
-    }
-
-    private void StartAI()
-    {
-        destinationPoint = GetDestinationPoint();
-        Debug.Log(destinationPoint);
-    }
+        float remainingDistance = new Vector2(horizontalInput, verticalInput).magnitude;
 
 
-
-    private Vector2 GetDestinationPoint()
-    {
-        while (true)
+        if (remainingDistance > 0.1f)
         {
-            horizontalInput = Random.Range(0, 1f);
-            verticalInput = Random.Range(0, 1f);
-            float distance = Random.Range(1, 5f);
-            Vector2 direction = new Vector2(horizontalInput + transform.position.x, verticalInput + transform.position.y).normalized * distance;
+            movement?.Move(horizontalInput, verticalInput);
 
-
-
-            RaycastHit2D[] hit = Physics2D.RaycastAll(transform.position, direction, distance);
-            if (hit.Length < 2)
-            {
-
-                if (Physics2D.OverlapCircle(direction, 0.3f) == null)
-                {
-                    return direction;
-                }
-
-            }
         }
+
+        else
+        {
+
+            movement?.Move(0, 0);
+            currentPoint = (currentPoint + 1) % routePoints.Count;
+            GoToNextPoint();
+        }
+
+
     }
+
+    //private Vector2 GetDestinationPoint()
+    //{
+    //    //int i = 0;
+    //    //while (true)
+    //    //{
+    //    //    float xPoint = Random.Range(leftBound.position.x + 0.5f, rightBound.position.x - 0.5f);
+    //    //    float yPoint = Random.Range(lowerBound.position.y + 0.5f, upperBound.position.y - 0.5f);
+
+    //    //    Vector2 destination = new Vector2(xPoint, yPoint);
+    //    //    Vector2 startPos = new Vector2(transform.position.x, transform.position.y);
+    //    //    Vector2 direction = startPos - destination;
+    //    //    float distance = destination.magnitude;
+    //    //    i++;
+
+    //    //    RaycastHit2D[] hit = Physics2D.RaycastAll(destination, direction, distance - 0.5f);
+    //    //    if (hit.Length == 1)
+    //    //    {
+    //    //        //Debug.Log(hit.Length);
+    //    //        if (Physics2D.OverlapCircle(destination, 0.4f) == null)
+    //    //        {
+    //    //            Debug.Log(destination);
+    //    //            Debug.Log(i);
+    //    //            return destination;
+    //    //        }
+
+    //    //    }
+    //    //}
+    //}
 
     //private IEnumerator Activation()
     //{

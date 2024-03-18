@@ -3,7 +3,6 @@ using UnityEngine;
 
 public class Controller : MonoBehaviour
 {
-    protected float horizontalInput;
-    protected float verticalInput;
+    protected Vector2 moveDirection;
     public IMovement movement;
 }

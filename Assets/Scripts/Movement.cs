@@ -5,6 +5,7 @@ using UnityEngine;
 public class Movement : MonoBehaviour, IMovement
 {
     private Rigidbody2D objRigidbody;
+    [SerializeField] private float movSpeed = 1;
 
     private void Awake()
     {
@@ -20,8 +21,8 @@ public class Movement : MonoBehaviour, IMovement
     public void Move(Vector2 direction)
     {
         Vector2 _direction = direction.normalized;
-        objRigidbody.velocity = direction * 1;
-        if (direction != Vector2.zero)
-            transform.up = direction;
+        objRigidbody.velocity = _direction * movSpeed;
+        if (_direction != Vector2.zero)
+            transform.up = _direction;
     }
 }
