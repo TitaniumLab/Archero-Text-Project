@@ -5,7 +5,6 @@ using UnityEngine;
 public class Movement : MonoBehaviour, IMovement
 {
     private Rigidbody2D objRigidbody;
-    [SerializeField] private float movSpeed = 1;
 
     private void Awake()
     {
@@ -18,7 +17,7 @@ public class Movement : MonoBehaviour, IMovement
     /// </summary>
     /// <param name="horizontalInput">x coordinate</param>
     /// <param name="verticalInput">y coordinate</param>
-    public void Move(Vector2 direction)
+    public void Move(Vector2 direction, float movSpeed)
     {
         Vector2 _direction = direction.normalized;
         objRigidbody.velocity = _direction * movSpeed;

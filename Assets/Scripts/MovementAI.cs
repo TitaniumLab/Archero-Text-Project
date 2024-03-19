@@ -3,17 +3,25 @@ using System.Collections.Generic;
 using UnityEngine;
 
 [RequireComponent(typeof(Controller))]
+[RequireComponent(typeof(ITrackTargets))]
 public class MovementAI : MonoBehaviour, IMovementInput
 {
     [SerializeField] private GameObject route;
+    [SerializeField] private float fireDistance = 1.5f;
+    private string targetLayerName;
+    private float viewDistance;
     private List<Vector3> routePoints = new List<Vector3>();
     private int currentPoint;
     private bool isWaiting = false;
+    public ITrackTargets trackTargets;
 
     private void Awake()
     {
         SetNearestRoutePoint();
         GetComponent<Controller>().moveInput = this;
+        this.viewDistance = GetComponent<Controller>().GetViewDistance();
+        this.targetLayerName = GetComponent<Controller>().GetTargetLayerName();
+        trackTargets = GetComponent<ITrackTargets>();
     }
 
     private void FixedUpdate()
@@ -22,7 +30,22 @@ public class MovementAI : MonoBehaviour, IMovementInput
             StartCoroutine(StayOnRoutePoint());
     }
 
-
+    /// <summary>
+    /// Direction of movement
+    /// </summary>
+    /// <returns>Relative position of the point</returns>
+    public Vector2 MoveDirection()
+    {
+        Vector2 nearestEnemy = trackTargets.GetNearestEnemyPosInRadius(viewDistance, targetLayerName);
+        if (nearestEnemy != Vector2.zero && nearestEnemy.magnitude > fireDistance)
+            return nearestEnemy;
+        else if (nearestEnemy != Vector2.zero && nearestEnemy.magnitude < fireDistance)
+            return Vector2.zero;
+        if (!isWaiting)
+            return routePoints[currentPoint] - transform.position;
+        else
+            return Vector2.zero;
+    }
 
     /// <summary>
     /// Finds index of nearest point to start route
@@ -40,20 +63,6 @@ public class MovementAI : MonoBehaviour, IMovementInput
                 currentPoint = i;
             }
         }
-    }
-
-    /// <summary>
-    /// Direction of movement
-    /// </summary>
-    /// <returns>Relative position of the point</returns>
-    public Vector2 MoveDirection()
-    {
-        if (!isWaiting)
-        {
-            return routePoints[currentPoint] - transform.position;
-        }
-        else
-            return Vector2.zero;
     }
 
     /// <summary>
