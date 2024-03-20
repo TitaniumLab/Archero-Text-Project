@@ -1,13 +1,11 @@
-using System;
 using UnityEngine;
 
-[RequireComponent(typeof(Controller))]
 public class TrackTargets : MonoBehaviour, ITrackTargets
 {
-    private void Awake()
-    {
-        GetComponent<Controller>().trackTargets = this;
-    }
+    [SerializeField] private string targetLayerName;
+    public string _targetLayerName { get { return targetLayerName; } }
+
+    [SerializeField] private float viewDistance;
 
     /// <summary>
     /// Returns nearest collider2d
@@ -15,11 +13,11 @@ public class TrackTargets : MonoBehaviour, ITrackTargets
     /// <param name="radius"></param>
     /// <param name="layerName"></param>
     /// <returns></returns>
-    public Vector2 GetNearestEnemyPosInRadius(float radius, string layerName)
+    public Vector2 GetNearestEnemyPosInRadius()
     {
-        Collider2D[] colliders = Physics2D.OverlapCircleAll(transform.position, radius, 1 << LayerMask.NameToLayer(layerName));
+        Collider2D[] colliders = Physics2D.OverlapCircleAll(transform.position, viewDistance, 1 << LayerMask.NameToLayer(targetLayerName));
         Vector2 direction = Vector2.zero;
-        float distance = radius;
+        float distance = viewDistance;
 
         if (colliders.Length == 0)
             return Vector2.zero;
@@ -38,4 +36,5 @@ public class TrackTargets : MonoBehaviour, ITrackTargets
 
         return direction;
     }
+
 }

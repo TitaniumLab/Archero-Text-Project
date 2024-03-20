@@ -1,14 +1,18 @@
+using System;
 using UnityEngine;
 
-[RequireComponent(typeof(Controller))]
+
 public class MovementPlayerInput : MonoBehaviour, IMovementInput
 {
     private float horizontalInput;
     private float verticalInput;
+    private IMovement Movement;
+    public IMovement movement { get => null; set => Movement = value; }
 
-    private void Awake()
+    private void Update()
     {
-        GetComponent<Controller>().moveInput = this;
+        Vector2 moveDirection = MoveDirection();
+        Movement?.Move(moveDirection);
     }
 
     public Vector2 MoveDirection()

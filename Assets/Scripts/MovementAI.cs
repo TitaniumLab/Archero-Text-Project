@@ -2,30 +2,33 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-[RequireComponent(typeof(Controller))]
 [RequireComponent(typeof(ITrackTargets))]
 public class MovementAI : MonoBehaviour, IMovementInput
 {
-    [SerializeField] private GameObject route;
     [SerializeField] private float fireDistance = 1.5f;
-    private string targetLayerName;
-    private float viewDistance;
-    private List<Vector3> routePoints = new List<Vector3>();
-    private int currentPoint;
+
+    [SerializeField] private GameObject route;
+    private List<Transform> routePoints = new List<Transform>();
+    [SerializeField] private int currentPointIndex = 0;
     private bool isWaiting = false;
     public ITrackTargets trackTargets;
 
+    private IMovement Movement;
+    public IMovement movement { get => null; set => Movement = value; }
+
+
     private void Awake()
     {
-        SetNearestRoutePoint();
-        GetComponent<Controller>().moveInput = this;
-        this.viewDistance = GetComponent<Controller>().GetViewDistance();
-        this.targetLayerName = GetComponent<Controller>().GetTargetLayerName();
+        for (int i = 0; i < route.transform.childCount; i++)
+            routePoints.Add(route.transform.GetChild(i));
+
         trackTargets = GetComponent<ITrackTargets>();
     }
 
     private void FixedUpdate()
     {
+        Movement?.Move(MoveDirection());
+
         if (MoveDirection().magnitude < 0.1f && !isWaiting)
             StartCoroutine(StayOnRoutePoint());
     }
@@ -36,33 +39,36 @@ public class MovementAI : MonoBehaviour, IMovementInput
     /// <returns>Relative position of the point</returns>
     public Vector2 MoveDirection()
     {
-        Vector2 nearestEnemy = trackTargets.GetNearestEnemyPosInRadius(viewDistance, targetLayerName);
+        Vector2 nearestEnemy = trackTargets.GetNearestEnemyPosInRadius();
         if (nearestEnemy != Vector2.zero && nearestEnemy.magnitude > fireDistance)
             return nearestEnemy;
         else if (nearestEnemy != Vector2.zero && nearestEnemy.magnitude < fireDistance)
             return Vector2.zero;
-        if (!isWaiting)
-            return routePoints[currentPoint] - transform.position;
+        else if (!isWaiting)
+            return GoToPoint();
         else
             return Vector2.zero;
     }
 
     /// <summary>
-    /// Finds index of nearest point to start route
+    /// Direction to current route point which can see
     /// </summary>
-    private void SetNearestRoutePoint()
+    private Vector2 GoToPoint()
     {
-        float distance = 100;
-        for (int i = 0; i < route.transform.childCount; i++)
+        for (int i = 0; i < routePoints.Count; i++)
         {
-            float _distance = (route.transform.GetChild(i).position - transform.position).magnitude;
-            routePoints.Add(route.transform.GetChild(i).position);
-            if (_distance < distance)
+            Vector2 direction = routePoints[currentPointIndex].position - transform.position;
+            float distance = direction.magnitude;
+            RaycastHit2D hit2DObstacle = Physics2D.Raycast(transform.position, direction, distance, 1 << LayerMask.NameToLayer("Obstacle"));
+            RaycastHit2D[] hit2DEnemy = Physics2D.RaycastAll(transform.position, direction, distance, 1 << LayerMask.NameToLayer("Enemy"));
+            if (!hit2DObstacle && hit2DEnemy.Length < 2)
             {
-                distance = _distance;
-                currentPoint = i;
+                return direction;
             }
+            else
+                currentPointIndex = (currentPointIndex + 1) % routePoints.Count;
         }
+        return Vector2.zero;
     }
 
     /// <summary>
@@ -75,6 +81,6 @@ public class MovementAI : MonoBehaviour, IMovementInput
         float waitSeconds = Random.Range(0, 3f);
         yield return new WaitForSeconds(waitSeconds);
         isWaiting = false;
-        currentPoint = (currentPoint + 1) % routePoints.Count;
+        currentPointIndex = (currentPointIndex + 1) % routePoints.Count;
     }
 }
